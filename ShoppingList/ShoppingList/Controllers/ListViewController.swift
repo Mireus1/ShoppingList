@@ -147,6 +147,7 @@ class ListViewController : UIViewController, UITableViewDelegate, UITableViewDat
                 db.collection("items").document(DeleteElement).delete() { err in
                     if let err = err {
                         print("Error removing document: \(err)")
+                        return
                     } else {
                         print("Document successfully removed! : \(DeleteElement)")
                     }

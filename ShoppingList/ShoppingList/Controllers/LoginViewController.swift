@@ -13,6 +13,8 @@ public var loggedUser = ""
 
 public var selectedList = ""
 
+public var selectedTemplate = ""
+
 class LoginViewController: UIViewController, UITextFieldDelegate {
     
     @IBOutlet weak var user: UITextField!

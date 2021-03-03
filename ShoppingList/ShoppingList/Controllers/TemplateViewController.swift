@@ -1,8 +1,8 @@
 //
-//  HomeViewController.swift
+//  TemplateViewController.swift
 //  ShoppingList
 //
-//  Created by Remi Poulenard on 28/01/2021.
+//  Created by Remi Poulenard on 28/02/2021.
 //
 
 import Foundation
@@ -11,52 +11,51 @@ import Firebase
 import FirebaseFirestore
 import FirebaseFirestoreSwift
 
-class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+public var TemplateTitle = ""
 
+class TemplateViewController : UIViewController, UITableViewDelegate, UITableViewDataSource {
     var Lists: [String] = []
-    @IBOutlet weak var TableList: UITableView!
-    @IBOutlet weak var AddBarButton: UIBarButtonItem!
     
-    private var data = [ShoppingList]()
+    @IBOutlet weak var TemplateList: UITableView!
+    //    private var data = [ShoppingList]()
     
-    var lists = [List]()
+    var templates = [Template]()
     
     let db = Firestore.firestore()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        TableList.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
-        self.TableList.delegate = self
-        self.TableList.dataSource = self
+        TemplateList.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        self.TemplateList.delegate = self
+        self.TemplateList.dataSource = self
         self.loadData()
     }
     
     func loadData()
     {
-        self.db.collection("list")
-            .whereField("users", arrayContains: loggedUser)
+        self.db.collection("template")
+            .whereField("createdBy", isEqualTo: loggedUser)
             .addSnapshotListener { (querySnapshot, error) in
                 guard let documents = querySnapshot?.documents else {
                     print("There is no documents")
                     return
                 }
-                self.lists = documents.compactMap({ (queryDocumentSnapshot) -> List? in
-                    return try? queryDocumentSnapshot.data(as: List.self)
+                self.templates = documents.compactMap({ (queryDocumentSnapshot) -> Template? in
+                    return try? queryDocumentSnapshot.data(as: Template.self)
                 })
-                if self.lists.count != 0 {
+                if self.templates.count != 0 {
                     DispatchQueue.main.async {
-                        self.TableList.reloadData()
+                        self.TemplateList.reloadData()
                     }
                 }
             }
     }
     
     @IBAction func AddListButton(_ sender: UIBarButtonItem) {
-//        performSegue(withIdentifier: "GoToNewList", sender: nil)
-        print("New List")
+        print("New Template")
     
-        let alert = UIAlertController(title: "Créer une nouvelle liste",
+        let alert = UIAlertController(title: "Créer un nouveau template",
                                       message: "",
                                       preferredStyle: .alert)
         
@@ -70,9 +69,8 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             if (text.isEmpty == false) {
                 print(text)
                 var ref: DocumentReference? = nil
-                ref = self.db.collection("list").addDocument(data: [
+                ref = self.db.collection("template").addDocument(data: [
                     "title": text,
-                    "date": Date(),
                     "createdBy": loggedUser,
                     "users": [loggedUser]
                 ]) { err in
@@ -95,25 +93,23 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         present(alert, animated: true, completion: nil)
     }
     
-    @IBAction func GoToListButton(_ sender: UIBarButtonItem) {
-        performSegue(withIdentifier: "GoToList", sender: nil)
-    }
-    // Mark: Table view functions
+    // MARK - Table view functions
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return lists.count
+        return templates.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-        cell.textLabel?.text = lists[indexPath.row].title
+        cell.textLabel?.text = templates[indexPath.row].title
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        selectedList = lists[indexPath.row].id!
-        performSegue(withIdentifier: "GoToList", sender: nil)
+        selectedTemplate = templates[indexPath.row].id!
+        TemplateTitle = templates[indexPath.row].title
+        performSegue(withIdentifier: "GoToTemplateList", sender: nil)
     }
     
     func tableView(_ tableView: UITableView, titleForDeleteConfirmationButtonForRowAt indexPath: IndexPath) -> String? {
@@ -122,23 +118,22 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            if (lists.count > 0) {
-                if (lists[indexPath.row].id! != "") {
-                    let DeleteElement = lists[indexPath.row].id!
+            if (templates.count > 0) {
+                if (templates[indexPath.row].id! != "") {
+                    let DeleteElement = templates[indexPath.row].id!
                     print("ELEMENT TO DELETE \(DeleteElement)")
-                    db.collection("list").document(DeleteElement).delete() { err in
+                    db.collection("template").document(DeleteElement).delete() { err in
                         if let err = err {
                             print("Error removing document: \(err)")
-                            return
                         } else {
                             print("Document successfully removed! : \(DeleteElement)")
+                            print(indexPath.row)
                         }
                     }
-                    lists.remove(at: indexPath.row)
+                    templates.remove(at: indexPath.row)
                     tableView.deleteRows(at: [indexPath], with: .fade)
                 }
             }
         }
     }
 }
-
